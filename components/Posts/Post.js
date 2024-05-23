@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
 
 const PostContainer = styled.div(() => ({
@@ -12,29 +12,23 @@ const PostContainer = styled.div(() => ({
 
 const CarouselContainer = styled.div(() => ({
   position: 'relative',
+  width: '100%',
+  overflow: 'hidden', // Hide overflow
 }));
 
 const Carousel = styled.div(() => ({
   display: 'flex',
-  overflowX: 'scroll',
-  scrollbarWidth: 'none',
-  msOverflowStyle: 'none',
-  '&::-webkit-scrollbar': {
-    display: 'none',
-  },
-  position: 'relative',
+  transition: 'transform 0.5s ease',
 }));
 
 const CarouselItem = styled.div(() => ({
-  flex: '0 0 auto',
-  scrollSnapAlign: 'start',
+  flex: '0 0 100%', // Each image takes the full width
 }));
 
 const Image = styled.img(() => ({
-  width: '280px',
+  width: '100%',
   height: 'auto',
   maxHeight: '300px',
-  padding: '10px',
 }));
 
 const Content = styled.div(() => ({
@@ -46,7 +40,8 @@ const Content = styled.div(() => ({
 
 const Button = styled.button(() => ({
   position: 'absolute',
-  bottom: 0,
+  top: '50%',
+  transform: 'translateY(-50%)',
   backgroundColor: 'rgba(255, 255, 255, 0.5)',
   border: 'none',
   color: '#000',
@@ -63,31 +58,74 @@ const NextButton = styled(Button)`
   right: 10px;
 `;
 
-const Post = ({ post }) => {
-  const carouselRef = useRef(null);
+const UserDetailsContainer = styled.div(() => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: '10px',
+  borderRadius: '5px',
+  marginBottom: '10px',
+  gap: '2px',
+}));
+
+const Initials = styled.div(() => ({
+  backgroundColor: '#d0d0d0',
+  color: '#000',
+  fontSize: '20px',
+  fontWeight: 'bold',
+  width: '60px',
+  height: '60px',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: '5px',
+}));
+
+const FullName = styled.div(() => ({
+  fontSize: '20px',
+  fontWeight: 'bold',
+  color: '#000',
+}));
+
+const Email = styled.div(() => ({
+  fontSize: '16px',
+  color: '#555',
+}));
+
+const getInitials = (name) => {
+  const nameParts = name.split(' ');
+  const initials = nameParts.map(part => part[0]).join('');
+  return initials.toUpperCase();
+};
+
+const UserDetails = ({ name, email }) => {
+  return (
+    <UserDetailsContainer>
+      <Initials>{getInitials(name)}</Initials>
+      <div>
+        <FullName>{name}</FullName>
+        <Email>{email}</Email>
+      </div>
+    </UserDetailsContainer>
+  );
+};
+
+const Post = ({ post, user }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleNextClick = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({
-        left: 50,
-        behavior: 'smooth',
-      });
-    }
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % post.images.length);
   };
 
   const handlePrevClick = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({
-        left: -70,
-        behavior: 'smooth',
-      });
-    }
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + post.images.length) % post.images.length);
   };
 
   return (
     <PostContainer>
+      <UserDetails name={"Leanne Graham"} email={"Sincere@april.biz"} />
       <CarouselContainer>
-        <Carousel ref={carouselRef}>
+        <Carousel style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
           {post.images.map((image, index) => (
             <CarouselItem key={index}>
               <Image src={image.url} alt={post.title} />
@@ -107,12 +145,16 @@ const Post = ({ post }) => {
 
 Post.propTypes = {
   post: PropTypes.shape({
-    content: PropTypes.any,
-    images: PropTypes.shape({
-      map: PropTypes.func,
-    }),
-    title: PropTypes.any,
-  }),
+    title: PropTypes.string.isRequired,
+    body: PropTypes.string.isRequired,
+    images: PropTypes.arrayOf(PropTypes.shape({
+      url: PropTypes.string.isRequired,
+    })).isRequired,
+  }).isRequired,
+  user: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    email: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default Post;
